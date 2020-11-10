@@ -1,0 +1,23 @@
+{
+  "configurations": {
+    "simple_python: Launch": {
+      "adapter": "debugpy",
+      "configuration": {
+        "name": "simple_python: Launch",
+        "type": "python",
+        "request": "launch",
+        "cwd": "${workspaceRoot}",
+	"externalConsole": true,
+	"stopAtEntry": true,
+        "stopOnEntry": true,
+        "debugOptions": [],
+	"console": "externalTerminal",
+        "program": "${file}",
+        "logging": {
+          "engineLogging": true
+        }
+	
+      }
+    }
+  }
+}
