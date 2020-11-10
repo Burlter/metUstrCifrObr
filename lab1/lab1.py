@@ -2,6 +2,7 @@
 N = 4024
 
 
+
 def signal_generate(time, function):
     """ 
     Генерирует сигнал с заданными параметрами
