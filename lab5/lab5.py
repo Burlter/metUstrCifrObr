@@ -90,8 +90,8 @@ def main():
     from numpy import exp, pi, cos
 
     # Set parameters for useful signal and find him
-    signal_discretization = 1/2**7
     useful_signal_length = 2**7
+    signal_discretization = 1/useful_signal_length
     useful_signal_range = np.linspace(0, useful_signal_length - 1,
                                       useful_signal_length)
     useful_signal = (
@@ -163,21 +163,68 @@ def main():
 
     exponentional_noise_signal = main_signal + exponentional_noise
 
-    # Find Wiener coefficients
-    autocorrelation_useful_signal = np.correlate(useful_signal,
-                                                 useful_signal, mode="full")
+    expected_value = sum(useful_signal) / useful_signal_length
+    usful_signal_correlation = []
+    for number in useful_signal_range:
+        usful_signal_correlation_step_sum = 0
+        for sum_number in range(0, useful_signal_length - int(number) - 1):
+            usful_signal_correlation_step_sum += (((useful_signal[sum_number]
+                                                    - expected_value)
+                                                   * (useful_signal[
+                                                       sum_number
+                                                       + int(number)]
+                                                      - expected_value)))
+        usful_signal_correlation.append(usful_signal_correlation_step_sum
+                                        / useful_signal_length)
+    usful_signal_correlation = np.array(usful_signal_correlation)
+
     autocorrelation_useful_signal_matrix = []
     for i in useful_signal_range:
         autocorrelation_useful_signal_matrix.append([])
         for j in useful_signal_range:
             autocorrelation_useful_signal_matrix[int(i)].append(
-                autocorrelation_useful_signal[int(i) - int(j)])
+                usful_signal_correlation[int(i) - int(j)])
+    autocorrelation_useful_signal_matrix = np.array(
+        autocorrelation_useful_signal_matrix)
 
-def lskdjf(parameter_list):
-    """
-    docstring
-    """
-    pass
+    autocorrelation_gaussian_noise_matrix = []
+    for i in useful_signal_range:
+        autocorrelation_gaussian_noise_matrix.append([])
+        for j in useful_signal_range:
+            if i == j:
+                autocorrelation_gaussian_noise_matrix[int(i)].append(
+                    wishful_stdev**2)
+            else:
+                autocorrelation_gaussian_noise_matrix[int(i)].append(0)
+    autocorrelation_gaussian_noise_matrix = np.array(
+        autocorrelation_gaussian_noise_matrix)
+
+    cross_correlation_matrix = (autocorrelation_gaussian_noise_matrix
+                                + autocorrelation_useful_signal_matrix)
+
+    wiener_coefficients = (np.matmul(np.linalg.inv(cross_correlation_matrix),
+                                     usful_signal_correlation))
+
+    filtered_signal = []
+    for number in range(0, main_signal_length):
+        filtered_signal_step_sum = 0
+        for sum_number in useful_signal_range:
+            if number - sum_number >= 0:
+                filtered_signal_step_sum += (
+                    wiener_coefficients[int(sum_number)] 
+                    * gaussian_noise_signal[number - int(sum_number)]) 
+        filtered_signal.append(filtered_signal_step_sum)
+    
+    print(gaussian_noise_signal[0].size, wiener_coefficients[0].size, 
+    wiener_coefficients.size, cross_correlation_matrix[3].size)
+    
+    plt.figure()
+    plt.plot(filtered_signal)
+
+
+
+
+
     ## Задаём константные значения для базисной функции
     #order_max = 3
     #order_range = np.linspace(0, order_max - 1, order_max)
@@ -240,7 +287,7 @@ def lskdjf(parameter_list):
     ## Выводим график разности сигналов
     #plot_signal_difference(signal_delta, signal_stdev)
 
-    #plt.show()
+    plt.show()
 
 
 if __name__ == "__main__":
