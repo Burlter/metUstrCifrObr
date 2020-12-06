@@ -5,6 +5,27 @@ def mother_wavelet_func(time):
     return time * exp(- (time**2)/2)
 
 
+def wavelet_plot(analisated_signal, wavelet_analisis_result):
+    """Plot 2d and 3d graph of wavelet analisis result"""
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    fig = plt.figure()
+    signal_ax = fig.add_subplot(211)
+    signal_ax.plot(analisated_signal)
+    signal_ax.set_title("Сигнал")
+    two_d_wavelet_ax = fig.add_subplot(212)
+    two_d_wavelet_ax.pcolormesh(wavelet_analisis_result)
+    two_d_wavelet_ax.set_title("Двухмерное отображение вейвлет анализа")
+    fig_3d = plt.figure()
+    three_d_wavelet_ax = fig_3d.add_subplot(111, projection='3d')
+    x, y = np.meshgrid(np.arange(wavelet_analisis_result.shape[0]),
+                       np.arange(wavelet_analisis_result.shape[1]))
+    three_d_wavelet_ax.set_title("Трёхмерное отображение вейвлет анализа")
+    three_d_wavelet_ax.plot_surface(x, y, wavelet_analisis_result,
+                                    cmap='viridis', rcount=20, ccount=20)
+
+
 def wavelet_analisis(wavelet_function, signal_to_analisis, wavelet_scale_arr,
                      wavelet_shift_arr):
     """Вейвлет анализ над переданным сигналом с помощью переданной вейвлет
@@ -23,8 +44,9 @@ def wavelet_analisis(wavelet_function, signal_to_analisis, wavelet_scale_arr,
                                       - np.min(wavelet_transform))
     wavelet_transform_normalizated = (wavelet_transform_intermediate
                                       / wavelet_transform_intermediate.max())
-    
+
     return wavelet_transform_normalizated
+
 
 def main():
     import numpy as np
@@ -56,31 +78,25 @@ def main():
     abrupt_change_signal = np.array(abrupt_change_signal)
     mother_wavelet = mother_wavelet_func(signal_time)
 
-    # Рисуем сигналы
-    signals_figure = plt.figure()
-    signals_figure.add_subplot(221)
-    plt.plot(signal_time, simple_harmonic_signal)
-    plt.title("Простой сигнал")
-    signals_figure.add_subplot(222)
-    plt.plot(signal_time, sum_of_harm_signals)
-    signals_figure.add_subplot(223)
-    plt.plot(signal_time, abrupt_change_signal)
-    signals_figure.add_subplot(224)
-    plt.plot(signal_time, mother_wavelet)
-
     # Добовляем помеху к сигналу
     white_noise = np.random.normal(0, 1, signal_length)
     simple_harmonic_signal_noised = simple_harmonic_signal + white_noise
     sum_of_harm_signals_noised = sum_of_harm_signals + white_noise
     abrupt_change_signal_noised = abrupt_change_signal + white_noise
     mother_wavelet_noised = mother_wavelet + white_noise
-    # plt.plot(signal_time, abrupt_change_signal_noised)
+
+    signal_list = [simple_harmonic_signal, sum_of_harm_signals,
+                   abrupt_change_signal, mother_wavelet,
+                   simple_harmonic_signal_noised,
+                   sum_of_harm_signals_noised, abrupt_change_signal_noised,
+                   mother_wavelet_noised]
 
     # Проводим нормализацию для вейвлет функции
     wavelet_column = 100
     wavelet_row = 100
     wavelet_length = 1000
-    normalization_check = quad(lambda x: mother_wavelet_func(x)**2, -np.inf, np.inf)[0]
+    normalization_check = quad(lambda x: mother_wavelet_func(x)**2, -np.inf,
+                               np.inf)[0]
     if normalization_check < 0.99 or 1.01 < normalization_check:
         normalization_coeff = sum((mother_wavelet_func(
             np.linspace(0, wavelet_length, wavelet_length + 1)))**2)
@@ -112,6 +128,7 @@ def main():
     plt.plot(scale_max_graph, label='График масимума "a"')
     plt.legend()
 
+    # Формируем вейвлет функцию для работы
     wavelet = (
         lambda row_number, column_number: (
             (1/np.sqrt(wavelet_scale[column_number]))
@@ -120,31 +137,14 @@ def main():
                  - wavelet_shift[row_number])
                 / wavelet_scale[column_number])))
 
-    # Вейвлет анализ сигнала
-    # wavelet_transform = []
-    # for column in range(0, wavelet_column):
-    #     wavelet_transform.append([])
-    #     for row in range(0, wavelet_row):
-    #         wavelet_transform[column].append(sum(sum_of_harm_signals_noised
-    #                                              * wavelet(row, column)))
-    # wavelet_transform = np.array(wavelet_transform)
-    
-    # wavelet_transform_intermediate = (wavelet_transform
-    #                                   - np.min(wavelet_transform))
-    # wavelet_transform_to_plot = (wavelet_transform_intermediate
-    #                              / wavelet_transform_intermediate.max())
-    wavelet_transform_to_plot = wavelet_analisis(
-        wavelet, sum_of_harm_signals_noised, wavelet_scale, wavelet_shift)
-    plt.figure()
-    #plt.contourf(wavelet_transform_to_plot)
-    plt.pcolormesh(wavelet_transform_to_plot)
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    x, y = np.meshgrid(np.arange(wavelet_transform_to_plot.shape[0]), np.arange(wavelet_transform_to_plot.shape[1]))
-    #ax.plot_wireframe(y, x, wavelet_transform_to_plot)
-    ax.plot_surface(x, y, wavelet_transform_to_plot, cmap='viridis', rcount=20, ccount=20)
+    # Вейвлет анализ всех сгенерированных нами сигналов
+    for signal in signal_list:
+        wavelet_transform_to_plot = wavelet_analisis(
+            wavelet, signal, wavelet_scale, wavelet_shift)
+        wavelet_plot(signal, wavelet_transform_to_plot)
 
-    plt.show() 
+    plt.show()
+
 
 if __name__ == "__main__":
     main()
