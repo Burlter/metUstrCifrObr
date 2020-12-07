@@ -11,8 +11,8 @@ def plot_signal_difference(exponential_signal_delta, signal_stdev):
     fig = plt.figure()
     ax = fig.add_subplot(111)
     ax.plot(exponential_signal_delta)
-    ax.set_title("Разность зашумлённого и аппроксимированного сигналов")
-    ax.text(0, 0.5, "Среднеквадратическая ошибка аппроксимации равна " +
+    ax.set_title("Разность зашумлённого и фильтрованного сигналов")
+    ax.text(0, 0.5, "Среднеквадратическая ошибка фильтрации равна " +
             "{}".format(round(signal_stdev, 3)), transform=ax.transAxes,
             fontsize=14)
 
@@ -46,11 +46,11 @@ def main():
     signal_discretization = 1/useful_signal_length
     useful_signal_range = np.linspace(0, useful_signal_length - 1,
                                       useful_signal_length)
-    #useful_signal = (
-    #    cos(pi * useful_signal_range * signal_discretization /
-    #        useful_signal_length)
-    #    - cos(3 * pi * useful_signal_range * signal_discretization /
-    #          useful_signal_length))
+    # useful_signal = (
+    #     cos(pi * useful_signal_range * signal_discretization /
+    #         useful_signal_length)
+    #     - cos(3 * pi * useful_signal_range * signal_discretization /
+    #           useful_signal_length))
     useful_signal = (cos(2 * pi * useful_signal_range * 3
                      * signal_discretization))**3
 
@@ -73,8 +73,8 @@ def main():
     main_signal = np.array(main_signal)
 
     # Generate gaussian noise
-    noise_stdev = 0.4
-    gaussian_noise = np.random.normal(0, noise_stdev, main_signal_length)
+    noise_dispersion = 0.9
+    gaussian_noise = np.random.normal(0, noise_dispersion, main_signal_length)
     gaussian_noise_signal = main_signal + gaussian_noise
 
     # Generate exponential correlation function noise, which formula
@@ -85,14 +85,16 @@ def main():
         distribution_of_a_random_variable * signal_discretization)
     noise_exp = exp(-exponential_operator)
     gaussian_noise_for_exp = np.random.normal(0, 1, main_signal_length)
-    exponentional_noise = [noise_stdev * np.sqrt(1 - noise_exp**2) *
+    exponentional_noise = [noise_dispersion * np.sqrt(1 - noise_exp**2) *
                            gaussian_noise_for_exp[number]]
     for number in range(1, main_signal_length):
         exponentional_noise.append(
                 exponentional_noise[number - 1] * noise_exp
-                + gaussian_noise_for_exp[number] * noise_stdev * np.sqrt(
+                + gaussian_noise_for_exp[number] * noise_dispersion * np.sqrt(
                     1 - noise_exp**2))
     exponentional_noise = np.array(exponentional_noise)
+
+    exponentional_noise_signal = main_signal + exponentional_noise
 
     # Find correlation exponentional noise and theoretical correlation
     exponentional_noise_correlation = np.correlate(
@@ -102,9 +104,9 @@ def main():
     correlation_shift_range = np.linspace(0, main_signal_length,
                                           main_signal_length)
     theoretical_exponentional_noise_correlation = (
-        noise_stdev**2 * np.exp(-distribution_of_a_random_variable
-                                * correlation_shift_range
-                                * signal_discretization))
+        noise_dispersion**2 * np.exp(-distribution_of_a_random_variable
+                                     * correlation_shift_range
+                                     * signal_discretization))
 
     # Plot theoretical and practical correlation
     plt.figure()
@@ -116,8 +118,6 @@ def main():
     plt.plot(theoretical_exponentional_noise_correlation,
              label="Теоритическая")
     plt.legend()
-
-    exponentional_noise_signal = main_signal + exponentional_noise
 
     # Find coeficients for gaussian noise signal filter
     usful_signal_correlation = []
@@ -150,7 +150,7 @@ def main():
         for j in useful_signal_range:
             if i == j:
                 autocorrelation_gaussian_noise_matrix[int(i)].append(
-                    noise_stdev**2)
+                    noise_dispersion**2)
             else:
                 autocorrelation_gaussian_noise_matrix[int(i)].append(0)
     autocorrelation_gaussian_noise_matrix = np.array(
@@ -173,10 +173,10 @@ def main():
              linewidth=3)
     plt.legend()
 
-    exponential_signal_delta = main_signal - gaussian_noise_filtered_signal
-    exponential_signal_stdev = (stdev(exponential_signal_delta)
-                                / stdev(main_signal))
-    plot_signal_difference(exponential_signal_delta, exponential_signal_stdev)
+    gaussian_signal_delta = main_signal - gaussian_noise_filtered_signal
+    gaussian_signal_stdev = (stdev(gaussian_signal_delta)
+                             / stdev(main_signal))
+    plot_signal_difference(gaussian_signal_delta, gaussian_signal_stdev)
 
     # Find coeficients for filter signal with exponential noise
     autocorrelation_exponential_noise_matrix = []
@@ -185,7 +185,7 @@ def main():
         for j in useful_signal_range:
             if i == j:
                 autocorrelation_exponential_noise_matrix[int(i)].append(
-                    noise_stdev**2 * noise_exp)
+                    noise_dispersion**2 * noise_exp)
             else:
                 autocorrelation_exponential_noise_matrix[int(i)].append(0)
     autocorrelation_exponential_noise_matrix = np.array(
@@ -208,7 +208,7 @@ def main():
              linewidth=2)
     plt.legend()
 
-    exponential_signal_delta = main_signal - gaussian_noise_filtered_signal
+    exponential_signal_delta = main_signal - exponentional_noise_signal
     exponential_signal_stdev = (stdev(exponential_signal_delta)
                                 / stdev(main_signal))
     plot_signal_difference(exponential_signal_delta, exponential_signal_stdev)

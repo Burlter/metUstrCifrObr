@@ -8,7 +8,7 @@ def mother_wavelet_func(time):
 def wavelet_plot(analisated_signal, wavelet_analisis_result):
     """Plot 2d and 3d graph of wavelet analisis result"""
     import matplotlib.pyplot as plt
-    import numpy as np
+    # import numpy as np
 
     fig = plt.figure()
     signal_ax = fig.add_subplot(211)
@@ -17,13 +17,13 @@ def wavelet_plot(analisated_signal, wavelet_analisis_result):
     two_d_wavelet_ax = fig.add_subplot(212)
     two_d_wavelet_ax.pcolormesh(wavelet_analisis_result)
     two_d_wavelet_ax.set_title("Двухмерное отображение вейвлет анализа")
-    fig_3d = plt.figure()
-    three_d_wavelet_ax = fig_3d.add_subplot(111, projection='3d')
-    x, y = np.meshgrid(np.arange(wavelet_analisis_result.shape[0]),
-                       np.arange(wavelet_analisis_result.shape[1]))
-    three_d_wavelet_ax.set_title("Трёхмерное отображение вейвлет анализа")
-    three_d_wavelet_ax.plot_surface(x, y, wavelet_analisis_result,
-                                    cmap='viridis', rcount=20, ccount=20)
+    # fig_3d = plt.figure()
+    # three_d_wavelet_ax = fig_3d.add_subplot(111, projection='3d')
+    # x, y = np.meshgrid(np.arange(wavelet_analisis_result.shape[0]),
+    #                    np.arange(wavelet_analisis_result.shape[1]))
+    # three_d_wavelet_ax.set_title("Трёхмерное отображение вейвлет анализа")
+    # three_d_wavelet_ax.plot_surface(x, y, wavelet_analisis_result,
+    #                                 cmap='viridis', rcount=20, ccount=20)
 
 
 def wavelet_analisis(wavelet_function, signal_to_analisis, wavelet_scale_arr,
@@ -43,7 +43,8 @@ def wavelet_analisis(wavelet_function, signal_to_analisis, wavelet_scale_arr,
     wavelet_transform_intermediate = (wavelet_transform
                                       - np.min(wavelet_transform))
     wavelet_transform_normalizated = (wavelet_transform_intermediate
-                                      / wavelet_transform_intermediate.max())
+                                      / wavelet_transform_intermediate.max()
+                                      * 255)
 
     return wavelet_transform_normalizated
 
@@ -104,7 +105,7 @@ def main():
             lambda time: ((mother_wavelet_func(time))
                           / np.sqrt(normalization_coeff)))
     else:
-        normalizated_mother_wavelet = lambda time: mother_wavelet_func(time)
+        normalizated_mother_wavelet = mother_wavelet_func()
 
     # Подбираем значения для диапазона изменения масштаба
     scale_min = 1/signal_length
